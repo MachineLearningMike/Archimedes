@@ -1,0 +1,6 @@
+.venv
+venv
+env
+.pre-commit-config.yaml
+setup.cfg
+README.md
