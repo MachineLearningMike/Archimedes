@@ -16,11 +16,7 @@ pool_list = {
 def download():
     project_id = "train-portfolio-ml"
 
-    dataset_id = "farming"
-    tbl_name = "tbl_bsc_USDT"
 
-    orderby = "TS_FROM"
-    query = f"SELECT * FROM `{dataset_id}.{tbl_name}` order by {orderby}"
 
     df = pandas_gbq.read_gbq(
         query, project_id=project_id, credentials=creds, progress_bar_type=None

@@ -24,16 +24,6 @@ def handle(id: int, name: str):
     return f"GET: {id} - {name}"
 
 
-@app.post("/")
-def handle_post(data: Data):
-    id = data.id
-    name = data.name
 
-    return f"POST: {id} - {name}"
-
-
-@app.post("/fetch")
-def fetch():
-    df = download()
     print(df)
     return "success"
