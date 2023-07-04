@@ -1,14 +1,18 @@
+import json
 from fastapi import FastAPI
 
-from utils.helper import download
+from utils.helper import fetch_pools_data
 from utils.models import Data
 
+import numpy as np
+from dist.tools_m1 import *
+
 description = """
-API description
+Archimedes API
 """
 
 app = FastAPI(
-    title="Project Name",
+    title="Archimedes",
     description=description,
     version="0.0.1",
     contact={
@@ -19,11 +23,43 @@ app = FastAPI(
 )
 
 
-@app.get("/")
-def handle(id: int, name: str):
-    return f"GET: {id} - {name}"
+@app.get("/portfolio")
+def portfolio_get(start_timeslot: int, number_timeslots: int):
+    return f"GET: start_timeslot={start_timeslot} start_timeslot={number_timeslots}"
 
+@app.post("/portfolio")
+def portfolio(data: Data):
+    chain_names = data.chain_names
+    pool_names = data.pool_names
+    assert len(chain_names) == len(pool_names)
+    pools = zip(chain_names, pool_names)
+    pools = list(set(pools))
+    assert len(chain_names) == len(pools)
 
+    mozaic_total_stake = data.mozaic_total_stake
+    start_timeslot = data.start_timeslot
+    number_timeslots = data.number_timeslots
+    seconds_per_slot = data.seconds_per_slot
+    assert seconds_per_slot in [1800, 3600, 7200]
 
-    print(df)
-    return "success"
+    # constraints for the beta version
+    assert number_timeslots == 1
+    assert seconds_per_slot == 3600
+
+    portfolio = None; rewards = None
+
+    if number_timeslots == 1: # analytical optimization, not ML one.
+        start_timeslot -= 1
+
+        pools_state = fetch_pools_data(
+            pools = pools, 
+            start_timestamp = seconds_per_slot * start_timeslot,
+            end_timestamp = seconds_per_slot * (start_timeslot + number_timeslots)
+        )
+
+        timeslot = 0
+        portfolio, rewards = get_optimum_m1_core(mozaic_total_stake, pools_state, timeslot)
+        assert np.abs(np.sum(portfolio) - mozaic_total_stake) / (mozaic_total_stake+1e-9) <= 0.000001
+        # print("result", mozaic_total_stake, reward, portfolio)
+        
+    return json.dumps(list(portfolio)) #, json.dumps(list(rewards))
