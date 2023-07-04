@@ -6,10 +6,15 @@ WORKDIR /app
 
 # Copy the requirements file and install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Copy the rest of the project code
 COPY . .
+
+RUN pyarmor gen .utils/tools_m1.py
+RUN rm .utils/tools_m1.py
+COPY .dist .
 
 # Expose the port on which your FastAPI application runs
 EXPOSE 8000
