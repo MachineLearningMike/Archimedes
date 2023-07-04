@@ -4,5 +4,4 @@ python-dotenv==1.0.0
 pre-commit==3.3.3
 requests
 pandas
-pandas-gbq
 pyarmor
