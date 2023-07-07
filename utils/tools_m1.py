@@ -1,29 +1,37 @@
 import numpy as np
 from datetime import datetime, timedelta
 
+dimRewardRate: int = 0
+dimRivalStake: int = 1
+dimMozaicStake: int = 2
+
+def get_reward_vector(states, portfolio, timeslot):
+    return (states[:, dimRewardRate, timeslot] * portfolio[:]) / (states[:, dimRivalStake, timeslot] + portfolio[:] + 1e-30)
+
 def reward_function(states, portfolio):
     loss = 0.0
     for t in range(states.shape[2]):
-        loss += np.sum((states[:, 0, t] * portfolio[:]) / (states[:, 1, t] + portfolio[:] + 1e-30), axis=None)
-        # Sum, over pools, of Release * MozaicStake / (PublicStake + MozaicStake)
+        loss += np.sum(get_reward_vector(states, portfolio, t), axis=None)
     return loss
 
 def get_unlimited_optimum_m1(mLpTotal, states):
-    fertility = np.sqrt(states[:, 0] * states[:, 1])
+    fertility = np.sqrt(states[:, dimRewardRate] * states[:, dimRivalStake])
     total_fertility = np.sum(fertility)
     supply_total = mLpTotal + np.sum(states[:, 1])
     # c = np.square( total_fertility / (supply_total + 1e-20) )
-    unlimited_mLp = fertility / (total_fertility + 1e-20) * supply_total - states[:, 1]
+    unlimited_mLp = fertility / (total_fertility + 1e-20) * supply_total - states[:, dimRivalStake]
     return unlimited_mLp
 
-def get_optimum_m1(totalStates, timeslot, mode=1): # Keep the default mode 1.
+def get_optimum_m1(totalStates, timeslot, mode=2): # Keep the default mode 1.
     # totalState = ( pools, 3 = (Relsese, public LP supply, Mozaic LP supply), timeslot)
-    mozaic_total_stake = np.sum(totalStates[:, -1, timeslot]) # total mozaic stake across pools.
+    mozaic_total_stake = np.sum(totalStates[:, dimMozaicStake, timeslot]) # total mozaic stake across pools.
     return get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=mode)
 
-def get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=1):
+def get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=2):
     now = datetime.now()
     expiry = datetime(2023,7,31)
+
+    # print(mozaic_total_stake, totalStates[:, 0:2, timeslot])
 
     if now > expiry:
         portfolio = np.zeros( (totalStates.shape[0],), dtype=totalStates.dtype )
@@ -31,27 +39,34 @@ def get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=1):
         reward = 0.0
     else:
         states = totalStates[:, :, timeslot]
-        portfolio = get_unlimited_optimum_m1(mozaic_total_stake, states) # shape == (nPools,)
+        # portfolio = get_unlimited_optimum_m1(mozaic_total_stake, states) # shape == (nPools,)
+        # print("0", portfolio)
+        portfolio = np.ones( (totalStates.shape[0],), dtype=totalStates.dtype )
 
         while True:
-            pIndices = portfolio > 0    # exclude zero-or-negative values from care for now
-            if not np.any(pIndices): break  # nothing to take care of, break
+            pIndices = portfolio > 0    # pick up positive dimensions
+            if not np.any(pIndices): break  # no positive dimensions, break
 
             states = totalStates[pIndices, :, timeslot]
             _mLp = get_unlimited_optimum_m1(mozaic_total_stake, states)  # allocate total to cared pools
+            # print("mLp", _mLp)
 
-            if mode == 1: pass
-            elif mode == 2:
-                if  np.min(_mLp) < 0:
-                    # pToExclude = np.argmin(_mLp[_mLp < 0])
-                    pToExclude = np.argmax(_mLp < 0)    # pick up the first True's index.
-                    _mLp[:] = 1
-                    _mLp[pToExclude] = -1   # kill the first negative pool, only
+            # if mode == 1: pass
+            # elif mode == 2:
+            #     if  np.min(_mLp) < 0:   # _mLp is not the optimal portfolio
+            #         _mLp[:] = 1
+            #         dropout = np.argmin(_mLp)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+            #         print("dropout", dropout)
+            #         _mLp[np.argmin(_mLp)] = -1   # kill the most negative pool, only
+            #     else:   # _mLp is the optimal portfolio
+            #         pass
 
             portfolio[pIndices] = _mLp
+            # print("port", portfolio)
+
             if np.min(_mLp) >= 0: break
 
         portfolio[portfolio < 0] = 0    # kill zer0-or-negative values now.
-        reward = reward_function(totalStates[:, :, timeslot:timeslot+1], portfolio)
+        reward_vector = get_reward_vector(totalStates, portfolio, timeslot)
 
-    return portfolio, reward
+    return portfolio, reward_vector

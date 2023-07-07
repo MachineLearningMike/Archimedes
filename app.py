@@ -5,7 +5,8 @@ from utils.helper import fetch_pools_data
 from utils.models import Data
 
 import numpy as np
-from utils.tools_m1 import *
+import datetime
+from tools_m1 import *
 
 description = """
 Archimedes API
@@ -37,10 +38,14 @@ def portfolio(data: Data):
     assert len(chain_names) == len(pools)
 
     mozaic_total_stake = data.mozaic_total_stake
-    start_timeslot = data.start_timeslot
     number_timeslots = data.number_timeslots
     seconds_per_slot = data.seconds_per_slot
     assert seconds_per_slot in [1800, 3600, 7200]
+
+    start_timeslot = data.start_timeslot
+    if start_timeslot < 0:
+        ct = datetime.utcnow()
+        start_timeslot = int(ct.timestamp() / seconds_per_slot)
 
     # constraints for the beta version
     assert number_timeslots == 1

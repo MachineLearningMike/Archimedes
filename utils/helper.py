@@ -19,7 +19,8 @@ def fetch_pools_data(
     chain_join = ' OR '.join(chain_condition)
 
     # query_text = f"SELECT \"TS_TO\", \"STGRS\", \"LPSupply\", \"CHAIN\", \"POOL\" FROM chain_farmingmodel WHERE ( {chain_join} ) AND \"TS_FROM\" >= {start_timestamp} AND \"TS_TO\" <= {end_timestamp} ORDER BY \"CHAIN\", \"TS_FROM\";"
-    query_text = f"SELECT \"STGRS\", \"LPSupply\", \"TS_TO\" FROM chain_farmingmodel WHERE ( {chain_join} ) AND \"TS_FROM\" >= {start_timestamp} AND \"TS_TO\" <= {end_timestamp} ORDER BY \"CHAIN\", \"TS_FROM\";"
+    query_text = f"SELECT \"STGRS\", \"LPSupply\", \"TS_TO\" FROM chain_farmingmodel WHERE ( {chain_join} ) AND \"TS_FROM\" >= {start_timestamp} AND \"TS_TO\" <= {end_timestamp} ORDER BY \"CHAIN\", \"POOL\", \"TS_FROM\";"
+    # print(query_text)
 
     query = { "query":  query_text}
 
@@ -28,6 +29,8 @@ def fetch_pools_data(
         result = response.json()
     else:
         print("Error: ", response.text)
+
+    # print(result)
 
     df = pd.DataFrame(result)
     assert df["STGRS"].to_numpy().shape[0] == df["LPSupply"].to_numpy().shape[0]
@@ -41,5 +44,5 @@ def fetch_pools_data(
     pools = [num[id*nRows_per_pool:(id+1)*nRows_per_pool] for id in range(len(pools))]
     pools = [np.reshape(np.swapaxes(pool, 0, 1), (1, len(("STGRS", "LPSupply", "TS_TO")), -1)) for pool in pools]
     pools_state = np.concatenate(pools, axis=0)
-    print("pools_state", pools_state)
+    # print("...pools_state", query_text, result, pools_state)
     return pools_state
