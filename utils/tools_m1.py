@@ -29,7 +29,7 @@ def get_optimum_m1(totalStates, timeslot, mode=2): # Keep the default mode 1.
 
 def get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=2):
     now = datetime.now()
-    expiry = datetime(2023,10,31)    # --------------------- Notice the expiry date.
+    expiry = datetime(2023,10,31)    # ------------------------ Notice the expiry date.
 
     if now > expiry:
         portfolio = np.zeros( (totalStates.shape[0],), dtype=totalStates.dtype )
