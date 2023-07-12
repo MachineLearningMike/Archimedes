@@ -31,16 +31,12 @@ def get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=2):
     now = datetime.now()
     expiry = datetime(2023,7,31)
 
-    # print(mozaic_total_stake, totalStates[:, 0:2, timeslot])
-
     if now > expiry:
         portfolio = np.zeros( (totalStates.shape[0],), dtype=totalStates.dtype )
         portfolio[0] = mozaic_total_stake
         reward = 0.0
     else:
         states = totalStates[:, :, timeslot]
-        # portfolio = get_unlimited_optimum_m1(mozaic_total_stake, states) # shape == (nPools,)
-        # print("0", portfolio)
         portfolio = np.ones( (totalStates.shape[0],), dtype=totalStates.dtype )
 
         while True:
@@ -49,20 +45,8 @@ def get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=2):
 
             states = totalStates[pIndices, :, timeslot]
             _mLp = get_unlimited_optimum_m1(mozaic_total_stake, states)  # allocate total to cared pools
-            # print("mLp", _mLp)
-
-            # if mode == 1: pass
-            # elif mode == 2:
-            #     if  np.min(_mLp) < 0:   # _mLp is not the optimal portfolio
-            #         _mLp[:] = 1
-            #         dropout = np.argmin(_mLp)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-            #         print("dropout", dropout)
-            #         _mLp[np.argmin(_mLp)] = -1   # kill the most negative pool, only
-            #     else:   # _mLp is the optimal portfolio
-            #         pass
 
             portfolio[pIndices] = _mLp
-            # print("port", portfolio)
 
             if np.min(_mLp) >= 0: break
 

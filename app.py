@@ -53,18 +53,7 @@ def portfolio(data: Data):
 
     portfolio = None; rewards = None
 
-    if number_timeslots == 1: # analytical optimization, not ML one.
-        start_timeslot -= 1
 
-        pools_state = fetch_pools_data(
-            pools = pools, 
-            start_timestamp = seconds_per_slot * start_timeslot,
-            end_timestamp = seconds_per_slot * (start_timeslot + number_timeslots)
-        )
 
-        timeslot = 0
-        portfolio, rewards = get_optimum_m1_core(mozaic_total_stake, pools_state, timeslot)
-        assert np.abs(np.sum(portfolio) - mozaic_total_stake) / (mozaic_total_stake+1e-9) <= 0.000001
-        # print("result", mozaic_total_stake, reward, portfolio)
         
     return json.dumps(list(portfolio)) #, json.dumps(list(rewards))
