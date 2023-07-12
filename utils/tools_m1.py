@@ -17,8 +17,8 @@ def reward_function(states, portfolio):
 def get_unlimited_optimum_m1(mLpTotal, states):
     fertility = np.sqrt(states[:, dimRewardRate] * states[:, dimRivalStake])
     total_fertility = np.sum(fertility)
-    supply_total = mLpTotal + np.sum(states[:, 1])
-    # c = np.square( total_fertility / (supply_total + 1e-20) )
+    supply_total = mLpTotal + np.sum(states[:, dimRivalStake])
+    c = np.square( total_fertility / (supply_total + 1e-9) )
     unlimited_mLp = fertility / (total_fertility + 1e-20) * supply_total - states[:, dimRivalStake]
     return unlimited_mLp
 
@@ -29,7 +29,7 @@ def get_optimum_m1(totalStates, timeslot, mode=2): # Keep the default mode 1.
 
 def get_optimum_m1_core(mozaic_total_stake, totalStates, timeslot, mode=2):
     now = datetime.now()
-    expiry = datetime(2023,7,31)
+    expiry = datetime(2023,10,31)    # --------------------- Notice the expiry date.
 
     if now > expiry:
         portfolio = np.zeros( (totalStates.shape[0],), dtype=totalStates.dtype )
